@@ -1,9 +1,12 @@
-# 13:06:56
-# 13:12:05
-from operator import mul
-from functools import reduce
+package main
 
-grid = list(map(int, """
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
+
+const SOURCE = `
 08 02 22 97 38 15 00 40 00 75 04 05 07 78 52 12 50 77 91 08
 49 49 99 40 17 81 18 57 60 87 17 40 98 43 69 48 04 56 62 00
 81 49 31 73 55 79 14 29 93 71 40 67 53 88 30 03 49 13 36 65
@@ -24,19 +27,58 @@ grid = list(map(int, """
 20 69 36 41 72 30 23 88 34 62 99 69 82 67 59 85 74 04 36 16
 20 73 35 29 78 31 90 01 74 31 49 71 48 86 81 16 23 57 05 54
 01 70 54 71 83 51 54 69 16 92 33 48 61 43 52 01 89 19 67 48
-""".split()))
+`
 
-def products():
-    for y in range(20):
-        for x in range(20):
-            s = y*20 + x
-            if x < 17:
-                yield reduce(mul, grid[s:s+4]) # 右
-            if y < 17:
-                yield reduce(mul, grid[s::20][:4]) # 縦
-                if x < 17:
-                    yield reduce(mul, grid[s::21][:4]) # 右下
-                if x >= 3:
-                    yield reduce(mul, grid[s::19][:4]) # 左下
+func makeTable() (ret []int) {
+	digits := strings.Fields(SOURCE)
+	for _, s := range digits {
+		i, e := strconv.Atoi(s)
+		if e != nil {
+			panic("bad input" + s)
+		}
+		ret = append(ret, i)
+	}
+	return
+}
 
-print(max(products()))
+func largest4(table []int) (largest int) {
+	for y := 0; y < 20*20; y+=20 {
+		for x := y; x < y+17; x++ {
+			t := table[x] * table[x+1] * table[x+2] * table[x+3]
+			if t > largest {
+				largest = t
+			}
+		}
+	}
+	for y := 0; y < 17*20; y+=20 {
+		for x := y; x < y+20; x++ {
+			t := table[x] * table[x+20*1] * table[x+20*2] * table[x+20*3]
+			if t > largest {
+				largest = t
+			}
+		}
+	}
+	for y := 0; y < 17*20; y+=20 {
+		for x := y; x < y+17; x++ {
+			t := table[x] * table[x+20*1+1] * table[x+20*2+2] * table[x+20*3+3]
+			if t > largest {
+				largest = t
+			}
+		}
+	}
+	for y := 0; y < 17*20; y+=20 {
+		for x := y+3; x < y+20; x++ {
+			t := table[x] * table[x+20*1-1] * table[x+20*2-2] * table[x+20*3-3]
+			if t > largest {
+				largest = t
+			}
+		}
+	}
+	return
+}
+
+func main() {
+	table := makeTable()
+	//fmt.Printf("%v", table)
+	fmt.Printf("%v\n", largest4(table))
+}
